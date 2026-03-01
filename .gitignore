@@ -6,5 +6,6 @@ __pycache__/
 *.fls
 *.log
 *.synctex.gz
+*.tex
 *.pt
 .DS_Store
