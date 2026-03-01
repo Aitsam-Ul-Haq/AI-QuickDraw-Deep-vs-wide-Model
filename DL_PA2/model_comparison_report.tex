@@ -1,0 +1,237 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{url}
+\usepackage{booktabs}
+% \usepackage{hyperref}
+% \usepackage{xcolor}
+
+\title{\textbf{Deep Learning Assignment 2:\\Comparative Analysis of Pancake vs Tower Neural Networks\\for Quick Draw Classification}}
+\author{Aitsam Ul Haq \\ 25280072}
+\date{\today}
+
+\begin{document}
+
+\maketitle{}
+
+\vspace{0.5cm}
+\small
+\centerline{\textbf{GitHub Repository:} \url{}}
+\normalsize
+\vspace{0.5cm}
+
+\section{Introduction}
+
+This report presents a comparative analysis of two neural network architectures---\textbf{Pancake} (wide and shallow) and \textbf{Tower} (narrow and deep)---for image classification on the Quick Draw dataset. The dataset contains 28$\times$28 grayscale sketches across 15 object categories.
+
+\subsection{Problem Statement}
+Given a set of hand-drawn sketches, classify each image into one of 15 categories: apple, baseball bat, basketball, clock, compass, cookie, donut, ladder, mountain, pizza, rabbit, soccer ball, spider, t-shirt, and wheel.
+
+\subsection{Constraints}
+\begin{itemize}
+    \item Maximum parameters: 3,000,000
+    \item Fixed batch size: 128
+    \item Input: 784 features (28$\times$28 flattened images)
+    \item Output: 15 classes
+\end{itemize}
+
+\section{Model Architectures}
+
+\subsection{Pancake Model (Wide \& Shallow)}
+
+The Pancake model prioritizes width over depth, with fewer layers but more neurons per layer.
+
+\textbf{Architecture:}
+\begin{align*}
+\text{Input} &\xrightarrow{\text{Flatten}} \mathbb{R}^{784} \\
+&\xrightarrow{\text{Linear}} \mathbb{R}^{1024} \xrightarrow{\text{BatchNorm}} \xrightarrow{\text{GELU}} \xrightarrow{\text{Dropout}(0.65)} \\
+&\xrightarrow{\text{Linear}} \mathbb{R}^{512} \xrightarrow{\text{BatchNorm}} \xrightarrow{\text{GELU}} \xrightarrow{\text{Dropout}(0.65)} \\
+&\xrightarrow{\text{Linear}} \mathbb{R}^{15}
+\end{align*}
+
+\textbf{Hyperparameters:}
+\begin{itemize}
+    \item Optimizer: Adam
+    \item Learning Rate: 0.0008
+    \item Weight Decay: $1 \times 10^{-4}$
+    \item Dropout: 0.65
+    \item Activation: GELU
+\end{itemize}
+
+\textbf{Total Parameters:} $\sim$2.7M
+
+\subsection{Tower Model (Narrow \& Deep)}
+
+The Tower model emphasizes depth, with more layers but fewer neurons per layer, enabling hierarchical feature learning.
+
+\textbf{Architecture:}
+\begin{align*}
+\text{Input} &\xrightarrow{\text{Flatten}} \mathbb{R}^{784} \\
+&\xrightarrow{\text{Linear}} \mathbb{R}^{256} \xrightarrow{\text{BatchNorm}} \xrightarrow{\text{GELU}} \xrightarrow{\text{Dropout}(0.3)} \\
+&\xrightarrow{\text{Linear}} \mathbb{R}^{256} \xrightarrow{\text{BatchNorm}} \xrightarrow{\text{GELU}} \xrightarrow{\text{Dropout}(0.3)} \\
+&\xrightarrow{\text{Linear}} \mathbb{R}^{256} \xrightarrow{\text{BatchNorm}} \xrightarrow{\text{GELU}} \xrightarrow{\text{Dropout}(0.2)} \\
+&\xrightarrow{\text{Linear}} \mathbb{R}^{256} \xrightarrow{\text{BatchNorm}} \xrightarrow{\text{GELU}} \xrightarrow{\text{Dropout}(0.2)} \\
+&\xrightarrow{\text{Linear}} \mathbb{R}^{256} \xrightarrow{\text{BatchNorm}} \xrightarrow{\text{GELU}} \xrightarrow{\text{Dropout}(0.2)} \\
+&\xrightarrow{\text{Linear}} \mathbb{R}^{256} \xrightarrow{\text{BatchNorm}} \xrightarrow{\text{GELU}} \xrightarrow{\text{Dropout}(0.2)} \\
+&\xrightarrow{\text{Linear}} \mathbb{R}^{256} \xrightarrow{\text{BatchNorm}} \xrightarrow{\text{GELU}} \xrightarrow{\text{Dropout}(0.2)} \\
+&\xrightarrow{\text{Linear}} \mathbb{R}^{256} \xrightarrow{\text{BatchNorm}} \xrightarrow{\text{GELU}} \xrightarrow{\text{Dropout}(0.2)} \\
+&\xrightarrow{\text{Linear}} \mathbb{R}^{15}
+\end{align*}
+
+\textbf{Hyperparameters:}
+\begin{itemize}
+    \item Optimizer: Adam
+    \item Learning Rate: 0.0007
+    \item Weight Decay: $1 \times 10^{-4}$
+    \item Dropout: 0.3 (first two layers), 0.2 (remaining layers)
+    \item Activation: GELU
+\end{itemize}
+
+\textbf{Total Parameters:} $\sim$600K
+
+\section{Training Setup}
+
+\subsection{Data Preprocessing}
+\begin{itemize}
+    \item Normalization: Pixel values scaled from [0, 255] to [0, 1]
+    \item Train-Validation Split: 80\%-20\%
+    \item Data Augmentation: None (keeping baseline comparison fair)
+\end{itemize}
+
+\subsection{Training Configuration}
+\begin{itemize}
+    \item Loss Function: Cross-Entropy Loss
+    \item Epochs: 20
+    \item Batch Size: 128
+    \item Device: CPU / GPU (auto-detected)
+\end{itemize}
+
+\section{Results}
+
+\subsection{Performance Metrics}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Metric} & \textbf{Pancake} & \textbf{Tower} \\ \midrule
+Training Accuracy & 80.54\% & 81.71\% \\
+Validation Accuracy & 79.94\% & 79.28\% \\
+Final Loss & 0.5785 & 0.5543 \\
+Generalization Gap & 0.60\% & 2.44\% \\
+Parameters & $\sim$2.7M & $\sim$700K \\ \bottomrule
+\end{tabular}
+\caption{Final model comparison after 20 epochs.}
+\end{table}
+
+\subsection{Training Curves}
+
+\textit{Note: Run the plotting cell in the notebook to generate \texttt{model\_comparison.png}, which will show:}
+\begin{itemize}
+    \item Training loss over epochs
+    \item Training \& validation accuracy curves
+    \item Final accuracy bar chart
+    \item Generalization gap analysis
+\end{itemize}
+
+\section{Analysis}
+
+\subsection{Pancake Model Behavior}
+\textbf{Advantages:}
+\begin{itemize}
+    \item Fast convergence due to high capacity
+    \item Can learn complex patterns quickly
+    \item Fewer layers = simpler gradient flow
+\end{itemize}
+
+\textbf{Disadvantages:}
+\begin{itemize}
+    \item High parameter count ($\sim$2.7M)
+    \item More prone to overfitting (requires stronger dropout = 0.65)
+    \item Large memory footprint
+\end{itemize}
+
+\subsection{Tower Model Behavior}
+\textbf{Advantages:}
+\begin{itemize}
+    \item Hierarchical feature learning (edges $\rightarrow$ shapes $\rightarrow$ objects)
+    \item Fewer parameters ($\sim$700K, only 26\% of pancake)
+    \item Better generalization with proper regularization
+    \item More parameter-efficient
+\end{itemize}
+
+\textbf{Disadvantages:}
+\begin{itemize}
+    \item Slower convergence (more layers)
+    \item Risk of vanishing gradients (mitigated by BatchNorm + GELU)
+    \item Requires careful tuning of learning rate
+\end{itemize}
+
+\subsection{Key Observations}
+
+\subsubsection{Regularization Strategy}
+\begin{itemize}
+    \item \textbf{Pancake:} Stronger dropout (0.65) and weight decay ($10^{-4}$) to combat overfitting from large capacity
+    \item \textbf{Tower:} Mixed dropout (0.3 in early layers, 0.2 deeper) with weight decay ($10^{-4}$)
+\end{itemize}
+
+\subsubsection{Learning Rate Selection}
+\begin{itemize}
+    \item \textbf{Pancake:} lr=0.0008 (higher, converges faster)
+    \item \textbf{Tower:} lr=0.0007 (lower, more stable for deep gradients)
+\end{itemize}
+
+\subsubsection{Activation Function}
+GELU was chosen over ReLU because:
+\begin{itemize}
+    \item Smoother gradients (no hard cutoff at 0)
+    \item Better gradient flow in deep networks
+    \item Works synergistically with BatchNorm
+    \item Empirically stable in this notebook for both architectures
+\end{itemize}
+
+\section{Conclusion}
+
+\subsection{Winner Determination}
+The model with higher \textbf{validation accuracy} is the winner, as it better generalizes to unseen data.
+
+\textit{Observed Winner (this run): Pancake model} with 79.94\% validation accuracy vs 79.28\% for Tower.
+
+\subsection{Why Pancake Won in This Run}
+\begin{enumerate}
+    \item \textbf{Slightly Better Validation Accuracy:} Pancake achieved 79.94\% vs 79.28\% for Tower.
+    \item \textbf{Smaller Generalization Gap:} 0.60\% for Pancake vs 2.44\% for Tower in this experiment.
+    \item \textbf{Stable Convergence:} Wide layers with strong regularization (dropout 0.65) gave robust results over 20 epochs.
+    \item \textbf{Task Fit:} For this Quick Draw setup, higher capacity with regularization performed slightly better than added depth.
+\end{enumerate}
+
+\subsection{When Pancake Might Win}
+\begin{itemize}
+    \item Dataset is small and simple
+    \item Feature extraction doesn't require hierarchy
+    \item Training time is critical (pancake converges faster)
+\end{itemize}
+
+\subsection{Future Improvements}
+To further boost accuracy:
+\begin{enumerate}
+    \item \textbf{Data Augmentation:} Random rotations, shifts, elastic distortions
+    \item \textbf{Learning Rate Scheduling:} Cosine annealing or ReduceLROnPlateau
+    \item \textbf{Ensemble Methods:} Average predictions from multiple models
+    \item \textbf{Architecture Search:} Experiment with different layer widths
+    \item \textbf{Advanced Regularization:} Label smoothing, mixup
+\end{enumerate}
+
+\section{References}
+
+\begin{enumerate}
+    \item Glorot, X., \& Bengio, Y. (2010). Understanding the difficulty of training deep feedforward neural networks.
+    \item Hendrycks, D., \& Gimpel, K. (2016). Gaussian Error Linear Units (GELUs).
+    \item Ioffe, S., \& Szegedy, C. (2015). Batch Normalization: Accelerating Deep Network Training.
+    \item Kingma, D. P., \& Ba, J. (2014). Adam: A Method for Stochastic Optimization.
+    \item Quick Draw Dataset: \url{https://quickdraw.withgoogle.com/data}
+\end{enumerate}
+
+\end{document}
