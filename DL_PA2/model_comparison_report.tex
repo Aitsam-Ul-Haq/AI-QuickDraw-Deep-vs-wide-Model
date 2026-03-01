@@ -18,7 +18,7 @@
 
 \vspace{0.5cm}
 \small
-\centerline{\textbf{GitHub Repository:} \url{}}
+\centerline{\textbf{GitHub Repository:} \url{https://github.com/Aitsam-Ul-Haq/AI-QuickDraw-Deep-vs-wide-Model/tree/main/DL_PA2}}
 \normalsize
 \vspace{0.5cm}
 
@@ -94,19 +94,10 @@ The Tower model emphasizes depth, with more layers but fewer neurons per layer, 
 \section{Training Setup}
 
 \subsection{Data Preprocessing}
-\begin{itemize}
-    \item Normalization: Pixel values scaled from [0, 255] to [0, 1]
-    \item Train-Validation Split: 80\%-20\%
-    \item Data Augmentation: None (keeping baseline comparison fair)
-\end{itemize}
+Pixel values were normalized from the original [0, 255] range to [0, 1] to ensure stable training. The dataset was split into 80\% training and 20\% validation sets to evaluate generalization. No data augmentation was applied to maintain a fair baseline comparison between the two architectures.
 
 \subsection{Training Configuration}
-\begin{itemize}
-    \item Loss Function: Cross-Entropy Loss
-    \item Epochs: 20
-    \item Batch Size: 128
-    \item Device: CPU / GPU (auto-detected)
-\end{itemize}
+Training was conducted using Cross-Entropy Loss as the optimization objective, with a batch size of 128 samples across 20 epochs. The device (CPU or GPU) was automatically detected and utilized to accelerate training where available.
 
 \section{Results}
 
@@ -126,73 +117,53 @@ Parameters & $\sim$2.7M & $\sim$700K \\ \bottomrule
 \caption{Final model comparison after 20 epochs.}
 \end{table}
 
+\subsection{Confusion Matrix}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.8\textwidth]{output.png}
+\caption{Confusion matrix for the champion model on the validation set, showing per-class prediction accuracy.}
+\label{fig:confusion_matrix}
+\end{figure}
+
 \subsection{Training Curves}
 
-\textit{Note: Run the plotting cell in the notebook to generate \texttt{model\_comparison.png}, which will show:}
-\begin{itemize}
-    \item Training loss over epochs
-    \item Training \& validation accuracy curves
-    \item Final accuracy bar chart
-    \item Generalization gap analysis
-\end{itemize}
+
+The figure above visualizes the training dynamics of both models, presenting training loss convergence over epochs, side-by-side training and validation accuracy curves for performance tracking, a comparative bar chart of final accuracies, and an overfitting analysis through generalization gap metrics.
 
 \section{Analysis}
 
 \subsection{Pancake Model Behavior}
-\textbf{Advantages:}
-\begin{itemize}
-    \item Fast convergence due to high capacity
-    \item Can learn complex patterns quickly
-    \item Fewer layers = simpler gradient flow
-\end{itemize}
 
-\textbf{Disadvantages:}
-\begin{itemize}
-    \item High parameter count ($\sim$2.7M)
-    \item More prone to overfitting (requires stronger dropout = 0.65)
-    \item Large memory footprint
-\end{itemize}
+\textbf{Advantages:} The Pancake model exhibits fast convergence owing to its high capacity, enabling rapid learning of complex patterns. Its shallow architecture—with only 2 hidden layers—results in simpler gradient flow, reducing the risk of vanishing gradients that plague deeper networks.
+
+\textbf{Disadvantages:} The primary trade-off is a large parameter count of approximately 2.7M, which increases both computational cost and memory footprint. The model's high capacity also makes it more susceptible to overfitting, necessitating stronger regularization through dropout (0.65) and weight decay to achieve good generalization.
 
 \subsection{Tower Model Behavior}
-\textbf{Advantages:}
-\begin{itemize}
-    \item Hierarchical feature learning (edges $\rightarrow$ shapes $\rightarrow$ objects)
-    \item Fewer parameters ($\sim$700K, only 26\% of pancake)
-    \item Better generalization with proper regularization
-    \item More parameter-efficient
-\end{itemize}
 
-\textbf{Disadvantages:}
-\begin{itemize}
-    \item Slower convergence (more layers)
-    \item Risk of vanishing gradients (mitigated by BatchNorm + GELU)
-    \item Requires careful tuning of learning rate
-\end{itemize}
+\textbf{Advantages:} The Tower model leverages its depth to enable hierarchical feature learning, typically progressing from low-level feature detection (edges) through mid-level abstractions (shapes) to high-level semantic concepts (objects). With only $\sim$700K parameters (26\% of the Pancake model), it is significantly more parameter-efficient while maintaining competitive performance. When properly regularized, the deep architecture provides superior generalization characteristics.
+
+\textbf{Disadvantages:} The deeper architecture inherently leads to slower convergence as information must propagate through more layers. Additionally, deep networks carry an elevated risk of vanishing gradients, though this is largely mitigated in our design through BatchNormalization and GELU activation. Fine-tuning the learning rate becomes critical, requiring careful experimentation to balance convergence speed and stability.
 
 \subsection{Key Observations}
 
 \subsubsection{Regularization Strategy}
-\begin{itemize}
-    \item \textbf{Pancake:} Stronger dropout (0.65) and weight decay ($10^{-4}$) to combat overfitting from large capacity
-    \item \textbf{Tower:} Mixed dropout (0.3 in early layers, 0.2 deeper) with weight decay ($10^{-4}$)
-\end{itemize}
+The Pancake model employs stronger dropout (0.65) combined with weight decay ($10^{-4}$) to control overfitting caused by its large parameter count. In contrast, the Tower model uses progressively reduced dropout starting at 0.3 for the first two layers and decreasing to 0.2 in deeper layers, alongside the same weight decay coefficient, balancing regularization intensity with network depth.
 
 \subsubsection{Learning Rate Selection}
-\begin{itemize}
-    \item \textbf{Pancake:} lr=0.0008 (higher, converges faster)
-    \item \textbf{Tower:} lr=0.0007 (lower, more stable for deep gradients)
-\end{itemize}
+The Pancake model uses a learning rate of 0.0008, which is slightly higher to leverage its wide architecture and encourage faster convergence. The Tower model employs a lower learning rate of 0.0007, providing greater stability during backpropagation through its deeper structure and allowing for more controlled gradient updates across multiple layers.
 
 \subsubsection{Activation Function}
-GELU was chosen over ReLU because:
-\begin{itemize}
-    \item Smoother gradients (no hard cutoff at 0)
-    \item Better gradient flow in deep networks
-    \item Works synergistically with BatchNorm
-    \item Empirically stable in this notebook for both architectures
-\end{itemize}
+GELU was selected over ReLU due to its superior gradient properties: it provides smoother gradients without the hard cutoff at zero, enabling better gradient flow through deep networks. The function works synergistically with BatchNormalization, and empirical testing demonstrated its stability and effectiveness for both the Pancake and Tower architectures.
 
 \section{Conclusion}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{model_comparison.png}
+\caption{Comprehensive model comparison showing training loss, accuracy curves, final accuracy, and generalization gap analysis.}
+\label{fig:model_comparison}
+\end{figure}
 
 \subsection{Winner Determination}
 The model with higher \textbf{validation accuracy} is the winner, as it better generalizes to unseen data.
@@ -208,11 +179,7 @@ The model with higher \textbf{validation accuracy} is the winner, as it better g
 \end{enumerate}
 
 \subsection{When Pancake Might Win}
-\begin{itemize}
-    \item Dataset is small and simple
-    \item Feature extraction doesn't require hierarchy
-    \item Training time is critical (pancake converges faster)
-\end{itemize}
+The Pancake architecture is preferable when the dataset is small and simple, where complex hierarchical feature learning provides limited benefit. It also excels when feature extraction is inherently non-hierarchical and when rapid convergence is critical, as its shallow structure achieves faster training compared to deeper models.
 
 \subsection{Future Improvements}
 To further boost accuracy:
@@ -224,14 +191,5 @@ To further boost accuracy:
     \item \textbf{Advanced Regularization:} Label smoothing, mixup
 \end{enumerate}
 
-\section{References}
-
-\begin{enumerate}
-    \item Glorot, X., \& Bengio, Y. (2010). Understanding the difficulty of training deep feedforward neural networks.
-    \item Hendrycks, D., \& Gimpel, K. (2016). Gaussian Error Linear Units (GELUs).
-    \item Ioffe, S., \& Szegedy, C. (2015). Batch Normalization: Accelerating Deep Network Training.
-    \item Kingma, D. P., \& Ba, J. (2014). Adam: A Method for Stochastic Optimization.
-    \item Quick Draw Dataset: \url{https://quickdraw.withgoogle.com/data}
-\end{enumerate}
 
 \end{document}
